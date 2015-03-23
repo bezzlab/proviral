@@ -13,6 +13,8 @@ use DBD::mysql;
 use POSIX qw(strftime);
 use Proviral qw(getPeptidesBySQL);
 
+$| = 1;
+
 unless (scalar @ARGV==1) {
 	print "Error: Wrong number of parameters\n\n";
 	&usage();
@@ -28,13 +30,22 @@ my $reviewed = $ARGV[0];
 my $type = "reviewed";
 $type = "all" if ($reviewed == 0);
 
+my $sigFolder = "signatures\\";
+$sigFolder =~s/ /_/g;
+unless (-d $sigFolder){
+	system ("mkdir $sigFolder");
+	print "The folder <$sigFolder> has been created\n\n";
+}
+print "The signature files will be stored in the folder $sigFolder\n\n";
+
 my $totalStart = time();
 my $dsn = "dbi:mysql:proviral:localhost:3306";
 my $connection = DBI->connect($dsn,"proviral","proviral") or die "Can't connect to the DB\n";#often named as dbh
 #my $proteinHostHandle = $connection->prepare("select accession from protein where host_taxo_id = ?");
 #my $proteinVirusHandle = $connection->prepare("select accession from protein where virus_taxo_id = ?");
 my $existanceHandle = $connection->prepare("select peptide_seq from peptide_existance where protein_accession = ?");
-my $infectionHandle = $connection->prepare("select virus_taxo_id from infection where host_taxo_id = ?");
+my $infectionAllHandle = $connection->prepare("select virus_taxo_id from infection where host_taxo_id = ?");
+my $infectionReviewedHandle = $connection->prepare("select distinct(i.virus_taxo_id) from infection i, source s, protein p where i.host_taxo_id = ? and p.virus_taxo_id = i.virus_taxo_id and s.source = p.source and s.reviewed > 0");
 
 my $virusHandle = $connection->prepare("select taxo_id, virus from virus");
 $virusHandle->execute();
@@ -74,6 +85,8 @@ sub dealOneHost(){
 #	print "Peptides in host: ", (scalar @peps),"\n";
 
 	#get all peptides for viruses
+	my $infectionHandle = $infectionReviewedHandle;
+	$infectionHandle = $infectionAllHandle if ($reviewed == 0);
 	$infectionHandle->execute($host_taxo);
 	my %viruses;
 	while (my ($virus_taxo) = $infectionHandle->fetchrow_array()){
@@ -159,6 +172,7 @@ sub dealOneHost(){
 		$max = $num if ($num>$max);
 		$min = $num if ($num<$min);
 	}
+	close SEQ;
 	print "For host $host_taxo there are total $total signature peptides in $count viruses out of all $totalVirus related with max $max and min $min\n\n";
 }
 
