@@ -18,13 +18,15 @@ push (@inputs, "human");
 push (@inputs, "virus_signature");
 $inputs{"human"}= "Peptide_result_list_reviewed_human.csv";
 $inputs{"human"}= "Peptide_result_list_unreviewed_human.csv";
+$inputs{"human"}= "Peptide_result_list_all_species_swissprot.csv";
+
 #$inputs{"species_signature"}="Galaxy9-[peptide_list_for_signature_Human].csv";
 $inputs{"virus_signature"}="Peptide_result_list_reviewed_human_species_signature.csv";
-$inputs{"virus_signature"}="Peptide_result_list_reviewed_human_virus_signature.csv";
-$inputs{"virus_signature"}="Peptide_result_list_reviewed_human_conserved_signature.csv";
+#$inputs{"virus_signature"}="Peptide_result_list_reviewed_human_virus_signature.csv";
+#$inputs{"virus_signature"}="Peptide_result_list_reviewed_human_conserved_signature.csv";
 #$inputs{"virus_signature"}="Peptide_result_list_unreviewed_human_species_signature.csv";
 #$inputs{"virus_signature"}="Peptide_result_list_unreviewed_human_virus_signature.csv";
-$inputs{"virus_signature"}="Peptide_result_list_unreviewed_human_conserved_signature.csv";
+#$inputs{"virus_signature"}="Peptide_result_list_unreviewed_human_conserved_signature.csv";
 
 my %data; #first key is the peptide sequence, second key is the dataset id, the value is the protein list in that dataset
 foreach my $id(@inputs){

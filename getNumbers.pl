@@ -2,8 +2,16 @@
 use strict;
 use Proviral qw(checkSource readSource);
 
-my $type = "host";
-#$type = "virus";
+my $numArg = scalar @ARGV;
+if (($numArg!=1)){
+	print "Error: The number of parameters is only allowed to be 1.\n";
+	&usage();
+}
+my $type = lc($ARGV[0]);
+unless ($type eq "host" || $type eq "virus"){
+	print "Error: The allowed values for the type are 'host' or 'virus'\n";
+	&usage();
+}
 
 my $ref = &readSource();
 my %sources = %{$ref};
@@ -114,8 +122,12 @@ if ($type eq "virus"){
 }
 
 
-
-
-
+sub usage(){
+	print "Usage: perl getNumber.pl <host|virus>\n";
+	print "This script returns the number of entries of proteins, peptides and peptide existances for all sources for the given type and virus and infection number for virus only\n";
+	print "Note 1: Due to the limitation of memory, the product ion part has coded and commented out\n";
+	print 'Note 2: the path ($dataFolder) indicating where the data files will be stored is hard coded at line 30, please change accordingly';
+	exit 1;
+}
 
 

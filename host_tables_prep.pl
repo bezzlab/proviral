@@ -16,29 +16,6 @@ $newSource{$sourceType}{version} = $version;
 $newSource{$sourceType}{reviewed} = $reviewed;
 &checkSource(\%newSource);
 
-#read in the current source file
-#my %sources;
-#open IN, "populate_source.tsv";
-#while (my $line=<IN>){#
-#	chomp $line;
-#	my ($source, $version)=split("\t",$line);
-#	#print "$source, $version\n";
-#	$sources{$source} = $version;
-#}
-#close IN;
-##check the current source against the saved sources
-#if (exists $sources{$sourceType}){
-#	my $savedVersion = $sources{$sourceType};
-#	if ($version ne $savedVersion){
-#		print "The data source $sourceType has already existed though with a different version value <$savedVersion> against the given version <$version>\n\n";
-#	}
-#}else{
-#	print "This is a new data source <$sourceType>, which has been automatically added to populate_source.tsv file\n\n";
-#	open OUT, ">>populate_source.tsv";
-#	print OUT "$sourceType\t$version\n";
-#	close OUT;
-#}
-
 #generate the data file folder for the given source and version
 my $dataFolder = "e:\\proviral\\datafiles\\host\\$sourceType\\$version\\";
 $dataFolder =~s/ /_/g;
@@ -71,12 +48,6 @@ while (my $line=<IN>){
 	$filenames{$taxo}=$filename;
 	$species{$mnemonic} = $taxo;
 }
-#check species
-#foreach my $abc(keys %species){
-#	my $taxo = $species{$abc};
-#	print "<$abc>\t<$taxo>\t<$filenames{$taxo}>\n";
-#}
-
 
 open PRO, ">${dataFolder}populate_protein_host_${sourceType}_$version.tsv" or die "Could not open the output file ${dataFolder}populate_protein_host_${sourceType}_$version.tsv";
 open EXISTANCE, ">${dataFolder}populate_peptide_existance_host_${sourceType}_$version.tsv";

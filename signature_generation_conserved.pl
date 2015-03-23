@@ -17,6 +17,13 @@ unless (scalar @ARGV==1) {
 	print "Error: Wrong number of parameters\n\n";
 	&usage();
 }
+
+my $reviewed = $ARGV[0];
+unless ($reviewed=~/^\d+$/){
+	print "The parameter should be integer, ideally 0 (all) or 1 (reviewed only)\n";
+	&usage();
+}
+
 my $reviewed = $ARGV[0];
 my $type = "reviewed";
 $type = "all" if ($reviewed == 0);
@@ -68,6 +75,7 @@ sub dealOneHost(){
 
 	#get all peptides for viruses
 	$infectionHandle->execute($host_taxo);
+	my %viruses;
 	while (my ($virus_taxo) = $infectionHandle->fetchrow_array()){
 #%peptides contains all peptides for the given species, keys are peptides, values are counts
 #		my %peptides = %{&getPeptidesForSpecies($virus_taxo,$proteinVirusHandle)};
@@ -75,10 +83,12 @@ sub dealOneHost(){
 		my @peptides = keys %peptides;
 #		print "Peptides in virus $virus_taxo: ", (scalar @peptides),"\n";
 		my $virus = $viralTaxos{$virus_taxo};
+		$viruses{$virus}++;
 		foreach my $pep(@peptides){
 			$viralPeptideExistance{$virus}{$pep}{$virus_taxo} = 1;
 		}
 	}
+	my $totalVirus = scalar keys %viruses;
 
 	my %virusPeptides; #keys are peptides, values are arrays of viruses the peptide exists
 	foreach my $virus (sort {$a cmp $b} keys %viralPeptideExistance){
@@ -129,15 +139,27 @@ sub dealOneHost(){
 
 	my $endTime = time();
 	print "Run time for processing host $host_taxo : ", $endTime-$startTime, " seconds\n";
-
+	#if no signature found in the current host
 	return if (scalar keys %virusSigSeqs == 0);
-	open SEQ, ">conserved_in_host_${host_taxo}_${type}_sig.fasta";
+
+	my $total = 0;
+	my $count = 0;
+	my $min = 99999999;
+	my $max = 0;
+
+	open SEQ, ">${sigFolder}conserved_in_host_${host_taxo}_${type}_sig.fasta";
 	foreach my $virus(keys %virusSigSeqs){
 		my @sigPeptides = @{$virusSigSeqs{$virus}};
 		my $seq = join("",@sigPeptides);
 		my $num = scalar @sigPeptides;
 		print SEQ ">conserved_sig_${virus}_in_${host_taxo}_total_$num\n$seq\n";
+
+		$total += $num;
+		$count++;
+		$max = $num if ($num>$max);
+		$min = $num if ($num<$min);
 	}
+	print "For host $host_taxo there are total $total signature peptides in $count viruses out of all $totalVirus related with max $max and min $min\n\n";
 }
 
 sub getPeptidesForSpecies(){

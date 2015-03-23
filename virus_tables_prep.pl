@@ -3,27 +3,20 @@ use strict;
 use Proteomic::Misc qw(getHydrophobicity ionCalculation calculateMZ);
 use Proviral qw(checkSource checkHost);
 
-#Virus
-#Inputs: swissprot virus dat
-#read in the file
-#	parse ID, AC, OH, OS, OX, SQ lines
-#	insert infection table (host, virus)
-#	do protein digest
 my $source = "Trembl";
 $source = "Swissprot";
 my $version = "Mar 2015";
-
+my $datFile = "virus_sample.dat";
+$datFile = "e:\\uniprot data\\$version\\uniprot_sprot_viruses.dat";
+#$datFile = "e:\\uniprot data\\$version\\uniprot_trembl_viruses.dat";
 my $dataFolder = "e:\\proviral\\datafiles\\virus\\$source\\$version\\";
+
 $dataFolder =~s/ /_/g;
 unless (-d $dataFolder){
 	system ("mkdir $dataFolder");
 	print "The folder <$dataFolder> has been created\n\n";
 }
 print "The data files will be saved in the folder <$dataFolder>\n";
-
-my $datFile = "virus_sample.dat";
-$datFile = "e:\\uniprot data\\$version\\uniprot_sprot_viruses.dat";
-#$datFile = "e:\\uniprot data\\$version\\uniprot_trembl_viruses.dat";
 
 my %species;
 my %hosts;
@@ -49,7 +42,6 @@ open ION, ">${dataFolder}populate_product_virus_${source}_$version.tsv";
 open VIRUS, ">${dataFolder}populate_virus_virus_${source}_$version.tsv";
 
 my %doneVirus; # keys are taxo id, value is another hash with predefined keys including name, virus, subtype, strain
-#my $count = 0;
 open IN, "$datFile" or die "Can not find the specified file $datFile";
 my @lines=();
 while(my $line=<IN>){
@@ -62,12 +54,7 @@ while(my $line=<IN>){
 		push(@lines,$line);
 	}
 }
-#print "Count: $count\n";
 
-#foreach my $species(sort {$a cmp $b} keys %species){
-#	print "$species\t$species{$species}\n";
-#}
-#one protein section starts with ID line and finishes with //
 sub dealOneProtein(){
 	my @lines = @{$_[0]};
 	my $id;

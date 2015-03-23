@@ -18,8 +18,21 @@ unless (scalar @ARGV==1) {
 	&usage();
 }
 my $reviewed = $ARGV[0];
+unless ($reviewed=~/^\d+$/){
+	print "The parameter should be integer, ideally 0 (all) or 1 (reviewed only)\n";
+	&usage();
+}
+
 my $type = "reviewed";
 $type = "all" if ($reviewed == 0);
+
+my $sigFolder = "signaturesDesktop\\";
+$sigFolder =~s/ /_/g;
+unless (-d $sigFolder){
+	system ("mkdir $sigFolder");
+	print "The folder <$sigFolder> has been created\n\n";
+}
+print "The signature files will be stored in the folder $sigFolder\n\n";
 
 my $totalStart = time();
 my $dsn = "dbi:mysql:proviral:localhost:3306";
@@ -72,11 +85,12 @@ sub dealOneHost(){
 	#get peptides for host
 	my %hostPeptides = %{&getPeptidesBySQL($reviewed, $host_taxo,"host")};
 	my @peps = keys %hostPeptides;
-	print "Peptides in host $host_taxo: ", (scalar @peps),"\n";
+#	print "Peptides in host $host_taxo: ", (scalar @peps),"\n";
 
 	#get all peptides for viruses
 	my %virusPeptides; #keys are peptides, values are arrays of viruses the peptide exists
 	$infectionHandle->execute($host_taxo);
+	my $totalVirus = 0;
 	while (my ($virus_taxo) = $infectionHandle->fetchrow_array()){
 #%peptides contains all peptides for the given species, keys are peptides, values are counts
 #		my %peptides = %{&getPeptidesForSpecies($virus_taxo,$proteinVirusHandle)};
@@ -86,6 +100,7 @@ sub dealOneHost(){
 		foreach my $pep(@peptides){
 			push (@{$virusPeptides{$pep}},$virus_taxo);
 		}
+		$totalVirus++;
 	}
 	#get all peptides from all viruses infecting the same host by one SQL
 	#the result showed that not quicker than byVirus method, kept here only for reference
@@ -126,13 +141,25 @@ sub dealOneHost(){
 	print "Run time for processing host $host_taxo : ", $endTime-$startTime, " seconds\n";
 
 	return if (scalar keys %virusSigSeqs == 0);
-	open SEQ, ">species_in_host_${host_taxo}_${type}_sig.fasta";
+
+	my $total = 0;
+	my $count = 0;
+	my $min = 99999999;
+	my $max = 0;
+
+	open SEQ, ">${sigFolder}species_in_host_${host_taxo}_${type}_sig.fasta";
 	foreach my $virus_taxo(keys %virusSigSeqs){
 		my @sigPeptides = @{$virusSigSeqs{$virus_taxo}};
 		my $seq = join("",@sigPeptides);
 		my $num = scalar @sigPeptides;
 		print SEQ ">species_sig_$viralNames{$virus_taxo}_${virus_taxo}_in_${host_taxo}_total_$num\n$seq\n";
+
+		$total += $num;
+		$count++;
+		$max = $num if ($num>$max);
+		$min = $num if ($num<$min);
 	}
+	print "For host $host_taxo there are total $total signature peptides in $count viruses out of all $totalVirus related with max $max and min $min\n\n";
 }
 
 sub getPeptidesForSpecies(){
